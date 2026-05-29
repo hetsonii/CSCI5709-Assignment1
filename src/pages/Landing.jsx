@@ -26,7 +26,7 @@ function Landing() {
           Make informed decisions about where you live.
         </p>
         <div className="hero-cta">
-          <button className="btn-primary btn-lg" onClick={() => navigate('/login')}>
+          <button className="btn-primary btn-lg" onClick={() => navigate('/signup')}>
             Create Free Account
           </button>
           <button className="btn-outline btn-lg" onClick={() => navigate('/login')}>

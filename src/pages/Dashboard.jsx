@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import ApartmentCard from '../components/ApartmentCard.jsx'
 import './Dashboard.css'
 
@@ -56,6 +57,7 @@ const SORT_OPTIONS = ['Highest Rated', 'Most Reviews', 'Lowest Rated']
 
 function Dashboard() {
   const navigate = useNavigate()
+  const { user, logout } = useAuth() // Pulling user from AuthContext
   const [search, setSearch] = useState('')
   const [neighbourhood, setNeighbourhood] = useState('All Neighbourhoods')
   const [sort, setSort] = useState('Highest Rated')
@@ -80,6 +82,14 @@ function Dashboard() {
   const totalReviews = APARTMENTS.reduce((s, a) => s + a.reviews, 0)
   const uniqueNeighbourhoods = [...new Set(APARTMENTS.map((a) => a.neighbourhood))].length
 
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  // Get user's initials for the avatar safely (defaults to 'U' if undefined)
+  const userInitials = user?.name ? user.name.substring(0, 2).toUpperCase() : 'U'
+
   return (
     <div className="dashboard">
       {/* Navbar */}
@@ -96,9 +106,9 @@ function Dashboard() {
           />
         </div>
         <div className="dash-user">
-          <div className="avatar">AM</div>
-          <span className="username">Alex</span>
-          <button className="btn-ghost" onClick={() => navigate('/')}>Sign out</button>
+          <div className="avatar">{userInitials}</div>
+          <span className="username">{user?.name || 'User'}</span>
+          <button className="btn-ghost" onClick={handleLogout}>Sign out</button>
         </div>
       </nav>
 
