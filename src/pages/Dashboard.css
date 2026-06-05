@@ -182,3 +182,18 @@
   color: var(--text-muted);
   font-size: 15px;
 }
+
+.dash-user__profile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 6px;
+  padding: 2px 4px;
+  transition: background 0.15s;
+}
+
+.dash-user__profile-link:hover {
+  background: rgba(37, 99, 235, 0.08);
+}

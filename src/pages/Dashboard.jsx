@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ApartmentCard from '../components/ApartmentCard.jsx'
 import './Dashboard.css'
 
+// IDs are slugs that match the :id param expected by ApartmentDetail
 const APARTMENTS = [
   {
-    id: 1,
+    id: 'the-marlstone',
     name: 'The Marlstone',
     address: '5540 Spring Garden Rd',
     neighbourhood: 'Spring Garden',
@@ -15,7 +16,7 @@ const APARTMENTS = [
     tags: [],
   },
   {
-    id: 2,
+    id: 'park-victoria',
     name: 'Park Victoria',
     address: '1496 Carlton St',
     neighbourhood: 'South End',
@@ -24,7 +25,7 @@ const APARTMENTS = [
     tags: ['Well maintained', 'Quiet', 'Expensive'],
   },
   {
-    id: 3,
+    id: 'le-marchant-towers',
     name: 'Le Marchant Towers',
     address: '1585 Le Marchant St',
     neighbourhood: 'West End',
@@ -33,7 +34,7 @@ const APARTMENTS = [
     tags: ['Good location', 'Parking limited', 'Aging building'],
   },
   {
-    id: 4,
+    id: 'fenwick-tower',
     name: 'Fenwick Tower',
     address: '5599 Fenwick St',
     neighbourhood: 'Downtown',
@@ -42,7 +43,7 @@ const APARTMENTS = [
     tags: ['Elevator issues', 'Great views', 'Security concerns'],
   },
   {
-    id: 5,
+    id: 'southpoint-apartments',
     name: 'Southpoint Apartments',
     address: '1050 South Park St',
     neighbourhood: 'South End',
@@ -57,7 +58,7 @@ const SORT_OPTIONS = ['Highest Rated', 'Most Reviews', 'Lowest Rated']
 
 function Dashboard() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth() // Pulling user from AuthContext
+  const { user, logout } = useAuth()
   const [search, setSearch] = useState('')
   const [neighbourhood, setNeighbourhood] = useState('All Neighbourhoods')
   const [sort, setSort] = useState('Highest Rated')
@@ -87,7 +88,6 @@ function Dashboard() {
     navigate('/')
   }
 
-  // Get user's initials for the avatar safely (defaults to 'U' if undefined)
   const userInitials = user?.name ? user.name.substring(0, 2).toUpperCase() : 'U'
 
   return (
@@ -106,8 +106,11 @@ function Dashboard() {
           />
         </div>
         <div className="dash-user">
-          <div className="avatar">{userInitials}</div>
-          <span className="username">{user?.name || 'User'}</span>
+          {/* Avatar links to the Profile page */}
+          <Link to="/profile" className="dash-user__profile-link" title="View profile">
+            <div className="avatar">{userInitials}</div>
+            <span className="username">{user?.name || 'User'}</span>
+          </Link>
           <button className="btn-ghost" onClick={handleLogout}>Sign out</button>
         </div>
       </nav>
@@ -148,7 +151,12 @@ function Dashboard() {
 
         <div className="apt-grid">
           {filtered.map((apt, i) => (
-            <ApartmentCard key={apt.id} apartment={apt} index={i} />
+            <ApartmentCard
+              key={apt.id}
+              apartment={apt}
+              index={i}
+              onClick={() => navigate(`/apartment/${apt.id}`)}
+            />
           ))}
           {filtered.length === 0 && (
             <div className="empty-state">No apartments match your search.</div>
