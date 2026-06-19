@@ -197,3 +197,33 @@
 .dash-user__profile-link:hover {
   background: rgba(37, 99, 235, 0.08);
 }
+
+
+/* Profile link in navbar (wraps avatar + username) */
+.dash-user__profile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 6px;
+  padding: 2px 6px;
+  transition: background 0.15s;
+}
+
+.dash-user__profile-link:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* Loading / error states */
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.error-state {
+  color: #dc2626;
+}

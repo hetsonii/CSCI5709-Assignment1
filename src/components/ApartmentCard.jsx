@@ -1,53 +1,58 @@
+import { useNavigate } from 'react-router-dom'
 import './ApartmentCard.css'
 
-const PLACEHOLDER_IMAGES = [
-  'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&q=80',
-  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=80',
-  'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80',
-  'https://images.unsplash.com/photo-1555443805-658637491dd4?w=600&q=80',
-  'https://images.unsplash.com/photo-1460317442991-0ec209397118?w=600&q=80',
-]
-
-function Stars({ rating }) {
+function StarDisplay({ rating }) {
   return (
-    <div className="stars">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={i <= Math.round(rating) ? 'star filled' : 'star'}>★</span>
+    <span className="stars" aria-label={`${rating} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <span key={n} style={{ color: n <= Math.round(rating) ? '#f5a623' : '#d1d5db' }}>
+          ★
+        </span>
       ))}
-    </div>
+    </span>
   )
 }
 
 function ApartmentCard({ apartment, index }) {
-  const img = PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length]
+  const navigate = useNavigate()
+
+  // Support both slug-based ids (strings) and numeric ids
+  const destination = `/apartment/${apartment.id || apartment.slug}`
 
   return (
-    <div className="apt-card">
-      <div className="apt-img-wrap">
-        <img src={img} alt={apartment.name} className="apt-img" />
-        <div className="apt-rating-badge">
-          <span className="rating-star">★</span>
-          {apartment.rating.toFixed(1)}
-        </div>
+    <div
+      className="apt-card"
+      onClick={() => navigate(destination)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && navigate(destination)}
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
+      <div className="apt-card__body">
+        <h3 className="apt-card__name">{apartment.name}</h3>
+        <p className="apt-card__address">{apartment.address}</p>
+        <span className="apt-card__neighbourhood">{apartment.neighbourhood}</span>
+
+        {apartment.tags && apartment.tags.length > 0 && (
+          <div className="apt-card__tags">
+            {apartment.tags.map((tag) => (
+              <span key={tag} className="apt-card__tag">{tag}</span>
+            ))}
+          </div>
+        )}
       </div>
-      <div className="apt-body">
-        <h3 className="apt-name">{apartment.name}</h3>
-        <p className="apt-address">
-          <span className="pin">📍</span>
-          {apartment.address} · {apartment.neighbourhood}
-        </p>
-        <div className="apt-tags">
-          {apartment.tags.length > 0
-            ? apartment.tags.map((t) => (
-                <span key={t} className="tag">{t}</span>
-              ))
-            : <span className="tag tag-muted">No AI summary yet</span>
-          }
+
+      <div className="apt-card__footer">
+        <div className="apt-card__rating">
+          <StarDisplay rating={apartment.rating ?? apartment.avg_rating ?? 0} />
+          <span className="apt-card__rating-num">
+            {parseFloat(apartment.rating ?? apartment.avg_rating ?? 0).toFixed(1)}
+          </span>
         </div>
-        <div className="apt-footer">
-          <span className="review-count">{apartment.reviews} review{apartment.reviews !== 1 ? 's' : ''}</span>
-          <Stars rating={apartment.rating} />
-        </div>
+        <span className="apt-card__reviews">
+          {apartment.reviews ?? apartment.review_count ?? 0} review
+          {(apartment.reviews ?? apartment.review_count ?? 0) !== 1 ? 's' : ''}
+        </span>
       </div>
     </div>
   )

@@ -1,29 +1,52 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react'
+import { authApi } from '../utils/api'
 
-const AuthContext = createContext();
+const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user,    setUser]    = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const login = (email, password) => {
-    setUser({ name: email.split('@')[0], email }); 
-  };
+  useEffect(() => {
+    const token = localStorage.getItem('tt_token')
+    if (!token) {
+      setLoading(false)
+      return
+    }
+    authApi.me()
+      .then(({ user }) => setUser(user))
+      .catch(() => localStorage.removeItem('tt_token'))
+      .finally(() => setLoading(false))
+  }, [])
 
-  const signup = (name, email, password) => {
-    setUser({ name, email });
-  };
+  async function signup(name, email, password) {
+    const data = await authApi.signup({ name, email, password })
+    localStorage.setItem('tt_token', data.token)
+    setUser(data.user)
+    return data
+  }
 
-  const logout = () => {
-    setUser(null);
-  };
+  async function login(email, password) {
+    const data = await authApi.login({ email, password })
+    localStorage.setItem('tt_token', data.token)
+    setUser(data.user)
+    return data
+  }
+
+  function logout() {
+    localStorage.removeItem('tt_token')
+    setUser(null)
+  }
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, signup, login, logout }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
+  return ctx
 }

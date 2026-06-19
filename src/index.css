@@ -372,3 +372,19 @@ input {
   overflow: hidden;
 }
 .profile-review__actions { display: flex; gap: 0.5rem; flex-shrink: 0; align-items: flex-start; }
+
+.review-card__image-wrap {
+  margin: 0.75rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.review-card__image {
+  display: block;
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}

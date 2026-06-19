@@ -1,116 +1,128 @@
-.login-page {
+/* ── Auth page shell ─────────────────────────────────────────── */
+.auth-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #eff6ff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  background: #f3f4f6;
+  padding: 1.5rem;
 }
 
-.login-card {
-  background: white;
-  border-radius: 16px;
-  padding: 40px 40px 36px;
+.auth-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
   width: 100%;
-  max-width: 400px;
-  box-shadow: var(--shadow-lg);
+  max-width: 420px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
 }
 
-.login-logo {
-  font-family: 'Sora', sans-serif;
-  font-weight: 700;
-  font-size: 22px;
-  color: var(--blue);
-  margin-bottom: 6px;
+/* ── Headings ────────────────────────────────────────────────── */
+.auth-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 0.25rem;
 }
 
-.login-sub {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: 28px;
+.auth-sub {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0 0 1.75rem;
 }
 
-.form-group {
-  margin-bottom: 18px;
+/* ── Error banner ────────────────────────────────────────────── */
+.auth-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
 }
 
-.form-label {
+/* ── Form fields ─────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 1.1rem;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.field input {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9rem;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.field input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.field input.input-error {
+  border-color: #dc2626;
+}
+
+.field-error {
+  font-size: 0.78rem;
+  color: #dc2626;
+}
+
+/* ── Submit button ───────────────────────────────────────────── */
+.btn-primary {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-bottom: 6px;
-}
-
-.form-input {
   width: 100%;
-  padding: 11px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  color: var(--text-primary);
-  transition: border-color 0.15s;
-  background: white;
-}
-
-.form-input:focus {
-  border-color: var(--blue);
-}
-
-.form-input::placeholder {
-  color: var(--text-muted);
-}
-
-.login-btn {
-  width: 100%;
-  padding: 13px;
-  background: var(--blue);
-  color: white;
-  border-radius: var(--radius-sm);
-  font-size: 15px;
+  padding: 0.7rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.95rem;
   font-weight: 600;
-  margin-top: 6px;
-  margin-bottom: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 0.5rem;
   transition: background 0.15s;
 }
 
-.login-btn:hover {
-  background: var(--blue-dark);
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
 }
 
-.login-footer {
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Switch link ─────────────────────────────────────────────── */
+.auth-switch {
   text-align: center;
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 1.25rem;
 }
 
-.login-link {
-  color: var(--blue);
-  cursor: pointer;
+.auth-switch a {
+  color: #2563eb;
   font-weight: 500;
+  text-decoration: none;
 }
 
-.login-link:hover {
+.auth-switch a:hover {
   text-decoration: underline;
-}
-
-.demo-badge {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  text-align: center;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.demo-badge:hover {
-  background: #dbeafe;
-}
-
-.demo-badge strong {
-  color: var(--blue);
 }

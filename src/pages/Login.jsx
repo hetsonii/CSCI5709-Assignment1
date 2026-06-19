@@ -1,82 +1,87 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import './Login.css'
 
-function Login() {
-  const navigate = useNavigate()
-  const { login } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+export default function Login() {
+  const { login }  = useAuth()
+  const navigate   = useNavigate()
+  const [form,     setForm]     = useState({ email: '', password: '' })
+  const [errors,   setErrors]   = useState({})
+  const [apiError, setApiError] = useState('')
+  const [loading,  setLoading]  = useState(false)
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setError('')
-
-    // Validation
-    if (!email || !password) {
-      setError('Please enter both email and password.')
-      return
-    }
-    
-    // Authenticate and Navigate
-    login(email, password)
-    navigate('/dashboard')
+  function handleChange(e) {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    setErrors(prev => ({ ...prev, [e.target.name]: '' }))
+    setApiError('')
   }
 
-  const fillDemo = () => {
-    setEmail('alex@dal.ca')
-    setPassword('password123')
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setLoading(true)
+    setApiError('')
+
+    try {
+      await login(form.email, form.password)
+      navigate('/dashboard')
+    } catch (err) {
+      if (err.errors) {
+        setErrors(err.errors)
+      } else {
+        setApiError(err.message || 'Login failed. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-logo">TenantTrails</div>
-        <p className="login-sub">See what past tenants had to say, before you sign.</p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-title">Welcome back</h1>
+        <p className="auth-sub">Sign in to your TenantTrails account</p>
 
-        {error && <div className="error-message" style={{backgroundColor: '#fee2e2', color: '#991b1b', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', fontSize: '0.875rem'}}>{error}</div>}
+        {apiError && <p className="auth-error">{apiError}</p>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Email</label>
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="field">
+            <label htmlFor="email">Email</label>
             <input
-              className="form-input"
+              id="email"
+              name="email"
               type="email"
-              placeholder="alex@dal.ca"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              value={form.email}
+              onChange={handleChange}
+              className={errors.email ? 'input-error' : ''}
             />
+            {errors.email && <span className="field-error">{errors.email}</span>}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
+          <div className="field">
+            <label htmlFor="password">Password</label>
             <input
-              className="form-input"
+              id="password"
+              name="password"
               type="password"
-              placeholder="••••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              value={form.password}
+              onChange={handleChange}
+              className={errors.password ? 'input-error' : ''}
             />
+            {errors.password && <span className="field-error">{errors.password}</span>}
           </div>
 
-          <button type="submit" className="login-btn" style={{width: '100%'}}>
-            Sign In
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
-        <p className="login-footer">
-          Don't have an account?{' '}
-          <span className="login-link" onClick={() => navigate('/signup')}>Create one</span>
+        <p className="auth-switch">
+          Don't have an account? <Link to="/signup">Sign up</Link>
         </p>
-
-        <div className="demo-badge" onClick={fillDemo}>
-          Demo: <strong>alex@dal.ca / password123</strong>
-        </div>
       </div>
     </div>
   )
 }
-
-export default Login

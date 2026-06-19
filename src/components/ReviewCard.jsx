@@ -3,18 +3,18 @@ import StarRating from "./StarRating";
 /**
  * ReviewCard component
  * Props:
- *   review  - { id, author, avatar, date, rating, text, comments }
+ *   review  - { id, author, avatar, date, rating, text, imageUrl, comments }
  *   currentUser - username of the logged-in user (to show reply box)
  *   onComment   - fn(reviewId, text) called when user submits a comment
  */
 export default function ReviewCard({ review, currentUser, onComment }) {
-  const { author, avatar, date, rating, text, comments = [] } = review;
+  const { id, author, avatar, date, rating, text, imageUrl, comments = [] } = review;
 
   function handleReply(e) {
     e.preventDefault();
     const input = e.target.elements.comment;
     if (!input.value.trim()) return;
-    onComment?.(review.id, input.value.trim());
+    onComment?.(id, input.value.trim());
     input.value = "";
   }
 
@@ -34,7 +34,19 @@ export default function ReviewCard({ review, currentUser, onComment }) {
 
       <p className="review-card__text">{text}</p>
 
-      {/* Comments */}
+      {/* ── Attached image ──────────────────────────────────── */}
+      {imageUrl && (
+        <div className="review-card__image-wrap">
+          <img
+            src={imageUrl}
+            alt="Review attachment"
+            className="review-card__image"
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+          />
+        </div>
+      )}
+
+      {/* ── Comments ────────────────────────────────────────── */}
       {comments.length > 0 && (
         <div className="review-card__comments">
           <span className="review-card__comments-toggle">
@@ -50,7 +62,7 @@ export default function ReviewCard({ review, currentUser, onComment }) {
         </div>
       )}
 
-      {/* Reply box – only shown when a user is logged in */}
+      {/* ── Reply box ───────────────────────────────────────── */}
       {currentUser && (
         <form className="review-card__reply" onSubmit={handleReply}>
           <input

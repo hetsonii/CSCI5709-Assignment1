@@ -1,105 +1,101 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import './Signup.css'
 
-function Signup() {
-  const navigate = useNavigate()
+export default function Signup() {
   const { signup } = useAuth()
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
+  const navigate   = useNavigate()
+  const [form,     setForm]     = useState({ name: '', email: '', password: '' })
+  const [errors,   setErrors]   = useState({})
+  const [apiError, setApiError] = useState('')
+  const [loading,  setLoading]  = useState(false)
 
-  const handleSubmit = (e) => {
+  function handleChange(e) {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    setErrors(prev => ({ ...prev, [e.target.name]: '' }))
+    setApiError('')
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
-    setError('')
+    setLoading(true)
+    setApiError('')
 
-    // Validation
-    if (!name || !email || !password || !confirmPassword) {
-      setError('All fields are required.')
-      return
+    try {
+      await signup(form.name, form.email, form.password)
+      navigate('/dashboard')
+    } catch (err) {
+      if (err.errors) {
+        setErrors(err.errors)
+      } else {
+        setApiError(err.message || 'Signup failed. Please try again.')
+      }
+    } finally {
+      setLoading(false)
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
-      return
-    }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      return
-    }
-
-    // Create Account and Navigate
-    signup(name, email, password)
-    navigate('/dashboard')
   }
 
   return (
-    <div className="signup-page">
-      <div className="signup-card">
-        <h1 className="signup-logo">TenantTrails</h1>
-        <p className="signup-sub">Create your account to submit reviews and comments.</p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-title">Create an account</h1>
+        <p className="auth-sub">Join TenantTrails and share your experience</p>
 
-        {error && <div className="error-message">{error}</div>}
+        {apiError && <p className="auth-error">{apiError}</p>}
 
-        <form onSubmit={handleSubmit} className="signup-form">
-          <div className="form-group">
-            <label className="form-label">Full name</label>
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="field">
+            <label htmlFor="name">Full name</label>
             <input
-              className="form-input"
+              id="name"
+              name="name"
               type="text"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+              value={form.name}
+              onChange={handleChange}
+              className={errors.name ? 'input-error' : ''}
             />
+            {errors.name && <span className="field-error">{errors.name}</span>}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Email</label>
+          <div className="field">
+            <label htmlFor="email">Email</label>
             <input
-              className="form-input"
+              id="email"
+              name="email"
               type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              value={form.email}
+              onChange={handleChange}
+              className={errors.email ? 'input-error' : ''}
             />
+            {errors.email && <span className="field-error">{errors.email}</span>}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
+          <div className="field">
+            <label htmlFor="password">Password</label>
             <input
-              className="form-input"
+              id="password"
+              name="password"
               type="password"
-              placeholder="At least 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              value={form.password}
+              onChange={handleChange}
+              className={errors.password ? 'input-error' : ''}
             />
+            {errors.password && <span className="field-error">{errors.password}</span>}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Confirm password</label>
-            <input
-              className="form-input"
-              type="password"
-              placeholder="Repeat password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
-
-          <button type="submit" className="signup-btn">
-            Create Account
+          <button type="submit" className="btn-primary" disabled={loading}>
+            {loading ? 'Creating account…' : 'Create account'}
           </button>
         </form>
 
-        <p className="signup-footer">
-          Already have an account?{' '}
-          <span className="signup-link" onClick={() => navigate('/login')}>Sign in</span>
+        <p className="auth-switch">
+          Already have an account? <Link to="/login">Sign in</Link>
         </p>
       </div>
     </div>
   )
 }
-
-export default Signup

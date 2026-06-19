@@ -1,0 +1,601 @@
+{
+  "info": {
+    "name": "TenantTrails API",
+    "_postman_id": "tt-api-collection-v2",
+    "description": "Complete collection for all TenantTrails API endpoints.\n\nHow to use:\n1. Run 'POST /auth/signup' or 'POST /auth/login' first — the token is saved automatically to {{token}}.\n2. All protected routes use {{token}} — no manual copy-paste needed.\n3. Run the full collection via Collection Runner to execute all tests at once.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base",       "value": "http://localhost:5000/api", "type": "string" },
+    { "key": "token",      "value": "",                          "type": "string" },
+    { "key": "reviewId",   "value": "",                          "type": "string" },
+    { "key": "commentId",  "value": "",                          "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base}}/health"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has token', () => pm.expect(pm.response.json()).to.have.property('token'));",
+                  "pm.test('User has no password field', () => pm.expect(pm.response.json().user).to.not.have.property('password'));",
+                  "pm.test('Name matches', () => pm.expect(pm.response.json().user.name).to.eql('Test User'));",
+                  "// Save token for subsequent requests",
+                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base}}/auth/signup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"testuser@dal.ca\",\n  \"password\": \"TestPass123\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "POST /auth/signup – duplicate email (should 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 on duplicate', () => pm.response.to.have.status(409));",
+                  "pm.test('Error message present', () => pm.expect(pm.response.json().message).to.match(/already exists/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base}}/auth/signup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"testuser@dal.ca\",\n  \"password\": \"TestPass123\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "POST /auth/signup – validation error (should 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Has errors object', () => pm.expect(pm.response.json()).to.have.property('errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base}}/auth/signup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bademail\",\n  \"password\": \"123\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "POST /auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has token', () => pm.expect(pm.response.json()).to.have.property('token'));",
+                  "pm.test('User has no password field', () => pm.expect(pm.response.json().user).to.not.have.property('password'));",
+                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@dal.ca\",\n  \"password\": \"TestPass123\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "POST /auth/login – wrong password (should 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Invalid message', () => pm.expect(pm.response.json().message).to.match(/invalid/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"testuser@dal.ca\",\n  \"password\": \"WrongPassword!\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "GET /auth/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns user object', () => pm.expect(pm.response.json()).to.have.property('user'));",
+                  "pm.test('Email matches', () => pm.expect(pm.response.json().user.email).to.eql('testuser@dal.ca'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base}}/auth/me"
+          }
+        },
+
+        {
+          "name": "GET /auth/me – no token (should 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base}}/auth/me"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Apartments",
+      "item": [
+        {
+          "name": "GET /apartments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns apartments array', () => pm.expect(pm.response.json().apartments).to.be.an('array'));",
+                  "pm.test('Each apartment has slug', () => {",
+                  "  pm.response.json().apartments.forEach(a => pm.expect(a).to.have.property('slug'));",
+                  "});",
+                  "pm.test('Each apartment has avg_rating', () => {",
+                  "  pm.response.json().apartments.forEach(a => pm.expect(a).to.have.property('avg_rating'));",
+                  "});",
+                  "pm.test('Each apartment has review_count', () => {",
+                  "  pm.response.json().apartments.forEach(a => pm.expect(a).to.have.property('review_count'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base}}/apartments"
+          }
+        },
+
+        {
+          "name": "GET /apartments/:slug",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has apartment object', () => pm.expect(pm.response.json()).to.have.property('apartment'));",
+                  "pm.test('Has reviews array', () => pm.expect(pm.response.json().reviews).to.be.an('array'));",
+                  "pm.test('Has ratingBreakdown', () => pm.expect(pm.response.json()).to.have.property('ratingBreakdown'));",
+                  "pm.test('Slug matches', () => pm.expect(pm.response.json().apartment.slug).to.eql('le-marchant-towers'));",
+                  "pm.test('Reviews have comments array', () => {",
+                  "  pm.response.json().reviews.forEach(r => pm.expect(r).to.have.property('comments'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base}}/apartments/le-marchant-towers"
+          }
+        },
+
+        {
+          "name": "GET /apartments/:slug – not found (should 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base}}/apartments/does-not-exist"
+          }
+        },
+
+        {
+          "name": "POST /apartments/:slug/reviews",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has review object', () => pm.expect(pm.response.json()).to.have.property('review'));",
+                  "pm.test('Review has review_id', () => pm.expect(pm.response.json().review).to.have.property('review_id'));",
+                  "pm.test('Rating matches', () => pm.expect(pm.response.json().review.rating).to.eql(4));",
+                  "// Save review_id for edit/delete tests",
+                  "pm.collectionVariables.set('reviewId', pm.response.json().review.review_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{base}}/apartments/the-marlstone/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"body\": \"Great location and very responsive management team. Would recommend to anyone looking in the Spring Garden area.\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "POST /apartments/:slug/reviews – duplicate (should 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 on duplicate review', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{base}}/apartments/the-marlstone/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 3,\n  \"body\": \"Trying to review the same apartment again — should fail.\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "POST /apartments/:slug/reviews – validation error (should 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Has errors object', () => pm.expect(pm.response.json()).to.have.property('errors'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{base}}/apartments/park-victoria/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 0,\n  \"body\": \"Too short\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "PUT /apartments/:slug/reviews/:reviewId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has updated review', () => pm.expect(pm.response.json()).to.have.property('review'));",
+                  "pm.test('Rating updated to 5', () => pm.expect(pm.response.json().review.rating).to.eql(5));",
+                  "pm.test('Body updated', () => pm.expect(pm.response.json().review.body).to.include('updated'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{base}}/apartments/the-marlstone/reviews/{{reviewId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"body\": \"Actually this place is amazing — updated after living here longer.\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "POST /apartments/:slug/reviews/:reviewId/comments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has comment object', () => pm.expect(pm.response.json()).to.have.property('comment'));",
+                  "pm.test('Comment has comment_id', () => pm.expect(pm.response.json().comment).to.have.property('comment_id'));",
+                  "pm.test('Body matches', () => pm.expect(pm.response.json().comment.body).to.include('helpful'));",
+                  "// Save comment_id for delete test",
+                  "pm.collectionVariables.set('commentId', pm.response.json().comment.comment_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{base}}/apartments/le-marchant-towers/reviews/4/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"This is really helpful, thanks for the detailed review!\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "POST /apartments/:slug/reviews/:reviewId/comments – no auth (should 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base}}/apartments/le-marchant-towers/reviews/4/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"This should be rejected.\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "DELETE /apartments/:slug/reviews/:reviewId/comments/:commentId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Success message', () => pm.expect(pm.response.json().message).to.match(/deleted/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base}}/apartments/le-marchant-towers/reviews/4/comments/{{commentId}}"
+          }
+        },
+
+        {
+          "name": "DELETE /apartments/:slug/reviews/:reviewId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Success message', () => pm.expect(pm.response.json().message).to.match(/deleted/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base}}/apartments/the-marlstone/reviews/{{reviewId}}"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "GET /profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has user object', () => pm.expect(pm.response.json()).to.have.property('user'));",
+                  "pm.test('Has reviews array', () => pm.expect(pm.response.json().reviews).to.be.an('array'));",
+                  "pm.test('Has stats object', () => pm.expect(pm.response.json()).to.have.property('stats'));",
+                  "pm.test('Stats has review_count', () => pm.expect(pm.response.json().stats).to.have.property('review_count'));",
+                  "pm.test('Stats has comment_count', () => pm.expect(pm.response.json().stats).to.have.property('comment_count'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base}}/profile"
+          }
+        },
+
+        {
+          "name": "GET /profile – no auth (should 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base}}/profile"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Upload",
+      "item": [
+        {
+          "name": "POST /upload – no auth (should 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base}}/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            }
+          }
+        },
+
+        {
+          "name": "POST /upload – with image (manual test)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Returns a url', () => pm.expect(pm.response.json()).to.have.property('url'));",
+                  "pm.test('URL is a string', () => pm.expect(pm.response.json().url).to.be.a('string'));",
+                  "pm.test('URL starts with https', () => pm.expect(pm.response.json().url).to.match(/^https/));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{base}}/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select a JPG or PNG file from your machine"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+
+  ]
+}
