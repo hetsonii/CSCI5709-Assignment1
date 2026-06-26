@@ -6,23 +6,23 @@ import ApartmentCard from '../components/ApartmentCard.jsx'
 import './Dashboard.css'
 
 const NEIGHBOURHOODS = ['All Neighbourhoods', 'Spring Garden', 'South End', 'West End', 'Downtown']
-const SORT_OPTIONS   = ['Highest Rated', 'Most Reviews', 'Lowest Rated']
+const SORT_OPTIONS = ['Highest Rated', 'Most Reviews', 'Lowest Rated']
 
 function Dashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
 
-  const [apartments,    setApartments]    = useState([])
-  const [loading,       setLoading]       = useState(true)
-  const [error,         setError]         = useState('')
-  const [search,        setSearch]        = useState('')
+  const [apartments, setApartments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
   const [neighbourhood, setNeighbourhood] = useState('All Neighbourhoods')
-  const [sort,          setSort]          = useState('Highest Rated')
+  const [sort, setSort] = useState('Highest Rated')
 
   useEffect(() => {
     apartmentsApi.list()
       .then(({ apartments }) => setApartments(apartments))
-      .catch(() => setError('Could not load apartments. Make sure the server is running.'))
+      .catch(() => setError('Could not load apartments. Is the server running?'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -38,21 +38,20 @@ function Dashboard() {
       return matchesSearch && matchesNeighbourhood
     })
     .sort((a, b) => {
-      if (sort === 'Highest Rated') return b.avg_rating - a.avg_rating
-      if (sort === 'Lowest Rated')  return a.avg_rating - b.avg_rating
-      if (sort === 'Most Reviews')  return b.review_count - a.review_count
+      if (sort === 'Highest Rated') return b.avgRating - a.avgRating
+      if (sort === 'Lowest Rated') return a.avgRating - b.avgRating
+      if (sort === 'Most Reviews') return b.reviewCount - a.reviewCount
       return 0
     })
 
-  const totalReviews        = apartments.reduce((s, a) => s + parseInt(a.review_count || 0), 0)
-  const uniqueNeighbourhoods = [...new Set(apartments.map((a) => a.neighbourhood))].length
+  const totalReviews = apartments.reduce((s, a) => s + parseInt(a.reviewCount || 0), 0)
+  const uniqueNeighbourhoods = [...new Set(apartments.map(a => a.neighbourhood))].length
 
-  const handleLogout = () => { logout(); navigate('/') }
+  const handleLogout = async () => { await logout(); navigate('/') }
   const userInitials = user?.name ? user.name.substring(0, 2).toUpperCase() : 'U'
 
   return (
     <div className="dashboard">
-      {/* Navbar */}
       <nav className="dash-nav">
         <span className="logo" onClick={() => navigate('/')}>TenantTrails</span>
         <div className="search-wrap">
@@ -62,7 +61,7 @@ function Dashboard() {
             type="text"
             placeholder="Search apartments by address or neighbourhood..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
         <div className="dash-user">
@@ -74,7 +73,6 @@ function Dashboard() {
         </div>
       </nav>
 
-      {/* Content */}
       <main className="dash-main">
         <div className="dash-header">
           <h1 className="dash-title">Apartments in Halifax</h1>
@@ -87,40 +85,31 @@ function Dashboard() {
           </div>
 
           <div className="filters">
-            <select
-              className="filter-select"
-              value={neighbourhood}
-              onChange={(e) => setNeighbourhood(e.target.value)}
-            >
-              {NEIGHBOURHOODS.map((n) => <option key={n}>{n}</option>)}
+            <select className="filter-select" value={neighbourhood} onChange={e => setNeighbourhood(e.target.value)}>
+              {NEIGHBOURHOODS.map(n => <option key={n}>{n}</option>)}
             </select>
-            <select
-              className="filter-select"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              {SORT_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+            <select className="filter-select" value={sort} onChange={e => setSort(e.target.value)}>
+              {SORT_OPTIONS.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
         </div>
 
         {loading && <p className="loading-state">Loading apartments…</p>}
-        {error   && <p className="error-state">{error}</p>}
+        {error && <p className="error-state">{error}</p>}
 
         {!loading && !error && (
           <div className="apt-grid">
             {filtered.map((apt, i) => (
-              // ApartmentCard reads apt.id (which is the slug) and navigates internally
               <ApartmentCard
-                key={apt.apartment_id}
+                key={apt.id}
                 apartment={{
-                  id:           apt.slug,          // used for navigation → /apartment/:slug
-                  name:         apt.name,
-                  address:      apt.address,
-                  neighbourhood:apt.neighbourhood,
-                  rating:       apt.avg_rating,
-                  reviews:      apt.review_count,
-                  tags:         apt.tags || [],
+                  id: apt.slug,          // slug used for navigation
+                  name: apt.name,
+                  address: apt.address,
+                  neighbourhood: apt.neighbourhood,
+                  rating: apt.avgRating,     // aliased field
+                  reviews: apt.reviewCount,   // aliased field
+                  tags: apt.tags || [],
                 }}
                 index={i}
               />

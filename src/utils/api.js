@@ -1,19 +1,25 @@
+/**
+ * api.js — centralised fetch wrapper
+ *
+ * Auth is now handled via httpOnly cookies.
+ * Every request sends credentials:include so the browser
+ * automatically attaches the tt_token cookie.
+ * No token is ever stored in JS / localStorage.
+ */
+
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-function getToken() {
-  return localStorage.getItem('tt_token')
-}
-
 async function request(path, options = {}) {
-  const token = getToken()
-
   const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   }
 
-  const res = await fetch(`${BASE}${path}`, { ...options, headers })
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',   // <── sends cookie on every request
+  })
 
   let data
   try {
@@ -24,8 +30,8 @@ async function request(path, options = {}) {
 
   if (!res.ok) {
     const err = new Error(data.message || 'Request failed.')
-    err.status = res.status
-    err.errors = data.errors || null
+    err.status  = res.status
+    err.errors  = data.errors || null
     throw err
   }
 
@@ -36,12 +42,13 @@ async function request(path, options = {}) {
 export const authApi = {
   signup: (body) => request('/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
   login:  (body) => request('/auth/login',  { method: 'POST', body: JSON.stringify(body) }),
+  logout: ()     => request('/auth/logout', { method: 'POST' }),
   me:     ()     => request('/auth/me'),
 }
 
 // ── Apartments ────────────────────────────────────────────────
 export const apartmentsApi = {
-  list: () => request('/apartments'),
+  list: ()     => request('/apartments'),
   get:  (slug) => request(`/apartments/${slug}`),
 
   addReview: (slug, body) =>
@@ -65,19 +72,21 @@ export const apartmentsApi = {
 
 // ── Profile ───────────────────────────────────────────────────
 export const profileApi = {
-  get: () => request('/profile'),
+  get:    ()     => request('/profile'),
+  update: (body) => request('/profile', { method: 'PUT',    body: JSON.stringify(body) }),
+  delete: (body) => request('/profile', { method: 'DELETE', body: JSON.stringify(body) }),
 }
 
 // ── Upload ────────────────────────────────────────────────────
 export const uploadApi = {
   upload: (file) => {
-    const token = getToken()
-    const form  = new FormData()
+    const form = new FormData()
     form.append('file', file)
+    // Do NOT set Content-Type — browser sets multipart boundary automatically
     return fetch(`${BASE}/upload`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: form,
+      method:      'POST',
+      credentials: 'include',   // <── cookie auth
+      body:        form,
     }).then(async (res) => {
       const data = await res.json()
       if (!res.ok) {
@@ -85,7 +94,7 @@ export const uploadApi = {
         err.status = res.status
         throw err
       }
-      return data
+      return data   // { url }
     })
   },
 }

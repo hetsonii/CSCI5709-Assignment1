@@ -21,15 +21,15 @@ function RatingBar({ star, count, total }) {
 }
 
 export default function ApartmentDetail() {
-  const { id: slug }  = useParams()
-  const { user }      = useAuth()
+  const { id: slug } = useParams()
+  const { user } = useAuth()
 
-  const [apartment,       setApartment]       = useState(null)
-  const [reviews,         setReviews]         = useState([])
-  const [ratingBreakdown, setRatingBreakdown] = useState({ 1:0,2:0,3:0,4:0,5:0 })
-  const [loading,         setLoading]         = useState(true)
-  const [error,           setError]           = useState('')
-  const [showDialog,      setShowDialog]      = useState(false)
+  const [apartment, setApartment] = useState(null)
+  const [reviews, setReviews] = useState([])
+  const [ratingBreakdown, setRatingBreakdown] = useState({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [showDialog, setShowDialog] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -44,17 +44,17 @@ export default function ApartmentDetail() {
   }, [slug])
 
   async function handleSubmitReview({ rating, text, file }) {
-    let image_url = null
+    let imageUrl = null
     if (file) {
       try {
         const uploaded = await uploadApi.upload(file)
-        image_url = uploaded.url
+        imageUrl = uploaded.url
       } catch {
-        // Non-fatal — proceed without image
+        // non-fatal — continue without image
       }
     }
-
-    const { review } = await apartmentsApi.addReview(slug, { rating, body: text, image_url })
+    // API now expects imageUrl (camelCase) to match aliased field
+    const { review } = await apartmentsApi.addReview(slug, { rating, body: text, imageUrl })
     setReviews(prev => [review, ...prev])
     setRatingBreakdown(prev => ({ ...prev, [rating]: (prev[rating] || 0) + 1 }))
     setShowDialog(false)
@@ -64,7 +64,7 @@ export default function ApartmentDetail() {
     const { comment } = await apartmentsApi.addComment(slug, reviewId, text)
     setReviews(prev =>
       prev.map(r =>
-        r.review_id === reviewId
+        r.id === reviewId
           ? { ...r, comments: [...r.comments, comment] }
           : r
       )
@@ -72,7 +72,7 @@ export default function ApartmentDetail() {
   }
 
   if (loading) return <div className="page-wrapper"><p>Loading…</p></div>
-  if (error)   return <div className="page-wrapper"><p>{error}</p><Link to="/dashboard">← Back</Link></div>
+  if (error) return <div className="page-wrapper"><p>{error}</p><Link to="/dashboard">← Back</Link></div>
   if (!apartment) return null
 
   const totalReviews = Object.values(ratingBreakdown).reduce((a, b) => a + b, 0)
@@ -88,16 +88,16 @@ export default function ApartmentDetail() {
           <p className="apt-header__desc">{apartment.description}</p>
         </div>
         <div className="apt-header__score">
-          <span className="apt-header__avg">{parseFloat(apartment.avg_rating).toFixed(1)}</span>
-          <StarRating value={Math.round(apartment.avg_rating)} size="md" />
+          {/* avgRating is the aliased field from the API */}
+          <span className="apt-header__avg">{parseFloat(apartment.avgRating).toFixed(1)}</span>
+          <StarRating value={Math.round(apartment.avgRating)} size="md" />
           <span className="apt-header__review-count">{totalReviews} reviews</span>
         </div>
       </div>
 
       <div className="apt-detail-layout">
         <div className="apt-detail-layout__main">
-          {/* AI summary uses real review data as context */}
-          <AISummary summary={apartment.ai_summary} tags={[]} />
+          <AISummary summary={apartment.aiSummary} tags={[]} />
 
           <div className="reviews-section">
             <div className="reviews-section__header">
@@ -111,19 +111,23 @@ export default function ApartmentDetail() {
 
             {reviews.map(r => (
               <ReviewCard
-                key={r.review_id}
+                key={r.id}
                 review={{
-                  id:       r.review_id,
-                  author:   r.author,
-                  avatar:   r.author?.slice(0, 2).toUpperCase(),
-                  date:     new Date(r.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }),
-                  rating:   r.rating,
-                  text:     r.body,
-                  imageUrl: r.image_url,
+                  id: r.id,               // aliased from review_id
+                  author: r.author,
+                  avatar: r.author?.slice(0, 2).toUpperCase(),
+                  date: new Date(r.createdAt).toLocaleDateString('en-CA', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                  }),
+                  rating: r.rating,
+                  text: r.text,             // aliased from body
+                  imageUrl: r.imageUrl,         // aliased from image_url
                   comments: (r.comments || []).map(c => ({
                     author: c.author,
-                    date:   new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }),
-                    text:   c.body,
+                    date: new Date(c.createdAt).toLocaleDateString('en-CA', {
+                      month: 'short', day: 'numeric', year: 'numeric',
+                    }),
+                    text: c.text,             // aliased from body
                   })),
                 }}
                 currentUser={user?.name}
@@ -143,14 +147,14 @@ export default function ApartmentDetail() {
             <dl className="property-info">
               <dt>Landlord</dt>     <dd>{apartment.landlord}</dd>
               <dt>Units</dt>        <dd>{apartment.units}</dd>
-              <dt>Year built</dt>   <dd>{apartment.year_built}</dd>
+              <dt>Year built</dt>   <dd>{apartment.yearBuilt}</dd>
               <dt>Neighbourhood</dt><dd>{apartment.neighbourhood}</dd>
             </dl>
           </div>
 
           <div className="card sidebar-card">
             <h3 className="sidebar-card__title">Rating Breakdown</h3>
-            {[5,4,3,2,1].map(s => (
+            {[5, 4, 3, 2, 1].map(s => (
               <RatingBar key={s} star={s} count={ratingBreakdown[s] || 0} total={totalReviews} />
             ))}
           </div>

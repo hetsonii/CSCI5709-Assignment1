@@ -1,18 +1,25 @@
 {
   "info": {
-    "name": "TenantTrails API",
-    "_postman_id": "tt-api-collection-v2",
-    "description": "Complete collection for all TenantTrails API endpoints.\n\nHow to use:\n1. Run 'POST /auth/signup' or 'POST /auth/login' first — the token is saved automatically to {{token}}.\n2. All protected routes use {{token}} — no manual copy-paste needed.\n3. Run the full collection via Collection Runner to execute all tests at once.",
+    "name": "TenantTrails API – Lab 4",
+    "_postman_id": "tt-api-collection-v3",
+    "description": "Full collection for Lab 4.\n\nNOTE: Auth is now cookie-based.\nIn Postman: Settings → Cookies → ensure cookies are enabled.\nThe login/signup requests set an httpOnly cookie automatically.\nAll subsequent requests use that cookie — no manual token copy needed.\n\nRun order for full flow:\n1. Signup or Login\n2. GET /me\n3. GET /apartments\n4. GET /apartments/:slug\n5. POST review\n6. PUT review\n7. POST comment\n8. DELETE comment\n9. DELETE review\n10. GET /profile\n11. PUT /profile\n12. DELETE /profile (account)\n13. Logout",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base",       "value": "http://localhost:5000/api", "type": "string" },
-    { "key": "token",      "value": "",                          "type": "string" },
-    { "key": "reviewId",   "value": "",                          "type": "string" },
-    { "key": "commentId",  "value": "",                          "type": "string" }
+    {
+      "key": "base",
+      "value": "http://localhost:5000/api"
+    },
+    {
+      "key": "reviewId",
+      "value": ""
+    },
+    {
+      "key": "commentId",
+      "value": ""
+    }
   ],
   "item": [
-
     {
       "name": "Health",
       "item": [
@@ -23,8 +30,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Status is ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('status is ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
                 ]
               }
             }
@@ -36,7 +43,6 @@
         }
       ]
     },
-
     {
       "name": "Auth",
       "item": [
@@ -47,19 +53,24 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
-                  "pm.test('Has token', () => pm.expect(pm.response.json()).to.have.property('token'));",
-                  "pm.test('User has no password field', () => pm.expect(pm.response.json().user).to.not.have.property('password'));",
-                  "pm.test('Name matches', () => pm.expect(pm.response.json().user.name).to.eql('Test User'));",
-                  "// Save token for subsequent requests",
-                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                  "pm.test('201 created', () => pm.response.to.have.status(201));",
+                  "pm.test('user.id present (aliased)', () => pm.expect(pm.response.json().user).to.have.property('id'));",
+                  "pm.test('user.createdAt present (aliased)', () => pm.expect(pm.response.json().user).to.have.property('createdAt'));",
+                  "pm.test('no token in body (cookie auth)', () => pm.expect(pm.response.json()).not.to.have.property('token'));",
+                  "pm.test('no password in response', () => pm.expect(pm.response.json().user).not.to.have.property('password'));",
+                  "pm.test('cookie set', () => pm.expect(pm.cookies.has('tt_token')).to.be.true);"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base}}/auth/signup",
             "body": {
               "mode": "raw",
@@ -67,23 +78,27 @@
             }
           }
         },
-
         {
-          "name": "POST /auth/signup – duplicate email (should 409)",
+          "name": "POST /auth/signup – duplicate (409)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 409 on duplicate', () => pm.response.to.have.status(409));",
-                  "pm.test('Error message present', () => pm.expect(pm.response.json().message).to.match(/already exists/i));"
+                  "pm.test('409 on duplicate', () => pm.response.to.have.status(409));",
+                  "pm.test('message mentions already exists', () => pm.expect(pm.response.json().message).to.match(/already exists/i));"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base}}/auth/signup",
             "body": {
               "mode": "raw",
@@ -91,23 +106,27 @@
             }
           }
         },
-
         {
-          "name": "POST /auth/signup – validation error (should 400)",
+          "name": "POST /auth/signup – validation (400)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
-                  "pm.test('Has errors object', () => pm.expect(pm.response.json()).to.have.property('errors'));"
+                  "pm.test('400 on bad payload', () => pm.response.to.have.status(400));",
+                  "pm.test('errors object present', () => pm.expect(pm.response.json()).to.have.property('errors'));"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base}}/auth/signup",
             "body": {
               "mode": "raw",
@@ -115,7 +134,6 @@
             }
           }
         },
-
         {
           "name": "POST /auth/login",
           "event": [
@@ -123,17 +141,23 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Has token', () => pm.expect(pm.response.json()).to.have.property('token'));",
-                  "pm.test('User has no password field', () => pm.expect(pm.response.json().user).to.not.have.property('password'));",
-                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('user.id present', () => pm.expect(pm.response.json().user).to.have.property('id'));",
+                  "pm.test('no token in body', () => pm.expect(pm.response.json()).not.to.have.property('token'));",
+                  "pm.test('no password in response', () => pm.expect(pm.response.json().user).not.to.have.property('password'));",
+                  "pm.test('cookie set', () => pm.expect(pm.cookies.has('tt_token')).to.be.true);"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base}}/auth/login",
             "body": {
               "mode": "raw",
@@ -141,31 +165,33 @@
             }
           }
         },
-
         {
-          "name": "POST /auth/login – wrong password (should 401)",
+          "name": "POST /auth/login – wrong password (401)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 401', () => pm.response.to.have.status(401));",
-                  "pm.test('Invalid message', () => pm.expect(pm.response.json().message).to.match(/invalid/i));"
+                  "pm.test('401 on wrong password', () => pm.response.to.have.status(401));"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{base}}/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"testuser@dal.ca\",\n  \"password\": \"WrongPassword!\"\n}"
+              "raw": "{\n  \"email\": \"testuser@dal.ca\",\n  \"password\": \"WrongPass!\"\n}"
             }
           }
         },
-
         {
           "name": "GET /auth/me",
           "event": [
@@ -173,40 +199,62 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Returns user object', () => pm.expect(pm.response.json()).to.have.property('user'));",
-                  "pm.test('Email matches', () => pm.expect(pm.response.json().user.email).to.eql('testuser@dal.ca'));"
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('user.id present', () => pm.expect(pm.response.json().user).to.have.property('id'));",
+                  "pm.test('user.createdAt present', () => pm.expect(pm.response.json().user).to.have.property('createdAt'));"
                 ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base}}/auth/me"
           }
         },
-
         {
-          "name": "GET /auth/me – no token (should 401)",
+          "name": "GET /auth/me – no cookie (401)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+                  "pm.test('401 without cookie', () => pm.response.to.have.status(401));"
                 ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "url": "{{base}}/auth/me"
+            "url": "{{base}}/auth/me",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "",
+                "disabled": true
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /auth/logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('message logged out', () => pm.expect(pm.response.json().message).to.match(/logged out/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base}}/auth/logout"
           }
         }
       ]
     },
-
     {
       "name": "Apartments",
       "item": [
@@ -217,16 +265,15 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Returns apartments array', () => pm.expect(pm.response.json().apartments).to.be.an('array'));",
-                  "pm.test('Each apartment has slug', () => {",
-                  "  pm.response.json().apartments.forEach(a => pm.expect(a).to.have.property('slug'));",
-                  "});",
-                  "pm.test('Each apartment has avg_rating', () => {",
-                  "  pm.response.json().apartments.forEach(a => pm.expect(a).to.have.property('avg_rating'));",
-                  "});",
-                  "pm.test('Each apartment has review_count', () => {",
-                  "  pm.response.json().apartments.forEach(a => pm.expect(a).to.have.property('review_count'));",
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('apartments is array', () => pm.expect(pm.response.json().apartments).to.be.an('array'));",
+                  "pm.test('fields are aliased (avgRating)', () => pm.expect(pm.response.json().apartments[0]).to.have.property('avgRating'));",
+                  "pm.test('fields are aliased (reviewCount)', () => pm.expect(pm.response.json().apartments[0]).to.have.property('reviewCount'));",
+                  "pm.test('fields are aliased (yearBuilt)', () => pm.expect(pm.response.json().apartments[0]).to.have.property('yearBuilt'));",
+                  "pm.test('old snake_case fields absent', () => {",
+                  "  const a = pm.response.json().apartments[0];",
+                  "  pm.expect(a).not.to.have.property('avg_rating');",
+                  "  pm.expect(a).not.to.have.property('review_count');",
                   "});"
                 ]
               }
@@ -237,7 +284,6 @@
             "url": "{{base}}/apartments"
           }
         },
-
         {
           "name": "GET /apartments/:slug",
           "event": [
@@ -245,14 +291,21 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Has apartment object', () => pm.expect(pm.response.json()).to.have.property('apartment'));",
-                  "pm.test('Has reviews array', () => pm.expect(pm.response.json().reviews).to.be.an('array'));",
-                  "pm.test('Has ratingBreakdown', () => pm.expect(pm.response.json()).to.have.property('ratingBreakdown'));",
-                  "pm.test('Slug matches', () => pm.expect(pm.response.json().apartment.slug).to.eql('le-marchant-towers'));",
-                  "pm.test('Reviews have comments array', () => {",
-                  "  pm.response.json().reviews.forEach(r => pm.expect(r).to.have.property('comments'));",
-                  "});"
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('apartment.avgRating aliased', () => pm.expect(pm.response.json().apartment).to.have.property('avgRating'));",
+                  "pm.test('reviews is array', () => pm.expect(pm.response.json().reviews).to.be.an('array'));",
+                  "pm.test('review fields aliased (id, text, imageUrl)', () => {",
+                  "  if (pm.response.json().reviews.length > 0) {",
+                  "    const r = pm.response.json().reviews[0];",
+                  "    pm.expect(r).to.have.property('id');",
+                  "    pm.expect(r).to.have.property('text');",
+                  "    pm.expect(r).to.have.property('imageUrl');",
+                  "    pm.expect(r).to.have.property('createdAt');",
+                  "    pm.expect(r).not.to.have.property('body');",
+                  "    pm.expect(r).not.to.have.property('image_url');",
+                  "  }",
+                  "});",
+                  "pm.test('ratingBreakdown present', () => pm.expect(pm.response.json()).to.have.property('ratingBreakdown'));"
                 ]
               }
             }
@@ -262,15 +315,14 @@
             "url": "{{base}}/apartments/le-marchant-towers"
           }
         },
-
         {
-          "name": "GET /apartments/:slug – not found (should 404)",
+          "name": "GET /apartments/:slug – not found (404)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                  "pm.test('404 for unknown slug', () => pm.response.to.have.status(404));"
                 ]
               }
             }
@@ -280,7 +332,6 @@
             "url": "{{base}}/apartments/does-not-exist"
           }
         },
-
         {
           "name": "POST /apartments/:slug/reviews",
           "event": [
@@ -288,12 +339,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
-                  "pm.test('Has review object', () => pm.expect(pm.response.json()).to.have.property('review'));",
-                  "pm.test('Review has review_id', () => pm.expect(pm.response.json().review).to.have.property('review_id'));",
-                  "pm.test('Rating matches', () => pm.expect(pm.response.json().review.rating).to.eql(4));",
-                  "// Save review_id for edit/delete tests",
-                  "pm.collectionVariables.set('reviewId', pm.response.json().review.review_id);"
+                  "pm.test('201 created', () => pm.response.to.have.status(201));",
+                  "pm.test('review.id present (aliased)', () => pm.expect(pm.response.json().review).to.have.property('id'));",
+                  "pm.test('review.text present (aliased)', () => pm.expect(pm.response.json().review).to.have.property('text'));",
+                  "pm.test('rating matches', () => pm.expect(pm.response.json().review.rating).to.eql(4));",
+                  "pm.collectionVariables.set('reviewId', pm.response.json().review.id);"
                 ]
               }
             }
@@ -301,25 +351,26 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type",  "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{base}}/apartments/the-marlstone/reviews",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rating\": 4,\n  \"body\": \"Great location and very responsive management team. Would recommend to anyone looking in the Spring Garden area.\"\n}"
+              "raw": "{\n  \"rating\": 4,\n  \"body\": \"Great location, very responsive management team and great neighbours.\"\n}"
             }
           }
         },
-
         {
-          "name": "POST /apartments/:slug/reviews – duplicate (should 409)",
+          "name": "POST /apartments/:slug/reviews – duplicate (409)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 409 on duplicate review', () => pm.response.to.have.status(409));"
+                  "pm.test('409 on duplicate review', () => pm.response.to.have.status(409));"
                 ]
               }
             }
@@ -327,26 +378,27 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type",  "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{base}}/apartments/the-marlstone/reviews",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rating\": 3,\n  \"body\": \"Trying to review the same apartment again — should fail.\"\n}"
+              "raw": "{\n  \"rating\": 3,\n  \"body\": \"Duplicate review attempt — should be rejected.\"\n}"
             }
           }
         },
-
         {
-          "name": "POST /apartments/:slug/reviews – validation error (should 400)",
+          "name": "POST /apartments/:slug/reviews – validation (400)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
-                  "pm.test('Has errors object', () => pm.expect(pm.response.json()).to.have.property('errors'));"
+                  "pm.test('400 on invalid rating', () => pm.response.to.have.status(400));",
+                  "pm.test('errors object present', () => pm.expect(pm.response.json()).to.have.property('errors'));"
                 ]
               }
             }
@@ -354,8 +406,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type",  "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{base}}/apartments/park-victoria/reviews",
             "body": {
@@ -364,7 +418,6 @@
             }
           }
         },
-
         {
           "name": "PUT /apartments/:slug/reviews/:reviewId",
           "event": [
@@ -372,10 +425,9 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Has updated review', () => pm.expect(pm.response.json()).to.have.property('review'));",
-                  "pm.test('Rating updated to 5', () => pm.expect(pm.response.json().review.rating).to.eql(5));",
-                  "pm.test('Body updated', () => pm.expect(pm.response.json().review.body).to.include('updated'));"
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('rating updated to 5', () => pm.expect(pm.response.json().review.rating).to.eql(5));",
+                  "pm.test('review.text aliased', () => pm.expect(pm.response.json().review).to.have.property('text'));"
                 ]
               }
             }
@@ -383,17 +435,45 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type",  "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{base}}/apartments/the-marlstone/reviews/{{reviewId}}",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rating\": 5,\n  \"body\": \"Actually this place is amazing — updated after living here longer.\"\n}"
+              "raw": "{\n  \"rating\": 5,\n  \"body\": \"Updated after living here longer — this place is excellent.\"\n}"
             }
           }
         },
-
+        {
+          "name": "PUT /apartments/:slug/reviews/:reviewId – wrong owner (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('403 on wrong owner', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/apartments/le-marchant-towers/reviews/4",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 1,\n  \"body\": \"Trying to edit someone else's review — should fail with 403.\"\n}"
+            }
+          }
+        },
         {
           "name": "POST /apartments/:slug/reviews/:reviewId/comments",
           "event": [
@@ -401,12 +481,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
-                  "pm.test('Has comment object', () => pm.expect(pm.response.json()).to.have.property('comment'));",
-                  "pm.test('Comment has comment_id', () => pm.expect(pm.response.json().comment).to.have.property('comment_id'));",
-                  "pm.test('Body matches', () => pm.expect(pm.response.json().comment.body).to.include('helpful'));",
-                  "// Save comment_id for delete test",
-                  "pm.collectionVariables.set('commentId', pm.response.json().comment.comment_id);"
+                  "pm.test('201 created', () => pm.response.to.have.status(201));",
+                  "pm.test('comment.id present (aliased)', () => pm.expect(pm.response.json().comment).to.have.property('id'));",
+                  "pm.test('comment.text present (aliased)', () => pm.expect(pm.response.json().comment).to.have.property('text'));",
+                  "pm.collectionVariables.set('commentId', pm.response.json().comment.id);"
                 ]
               }
             }
@@ -414,40 +492,18 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type",  "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{base}}/apartments/le-marchant-towers/reviews/4/comments",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"body\": \"This is really helpful, thanks for the detailed review!\"\n}"
+              "raw": "{\n  \"body\": \"Thanks for the detailed review, very helpful!\"\n}"
             }
           }
         },
-
-        {
-          "name": "POST /apartments/:slug/reviews/:reviewId/comments – no auth (should 401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{base}}/apartments/le-marchant-towers/reviews/4/comments",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"body\": \"This should be rejected.\"\n}"
-            }
-          }
-        },
-
         {
           "name": "DELETE /apartments/:slug/reviews/:reviewId/comments/:commentId",
           "event": [
@@ -455,19 +511,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Success message', () => pm.expect(pm.response.json().message).to.match(/deleted/i));"
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('message deleted', () => pm.expect(pm.response.json().message).to.match(/deleted/i));"
                 ]
               }
             }
           ],
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base}}/apartments/le-marchant-towers/reviews/4/comments/{{commentId}}"
           }
         },
-
         {
           "name": "DELETE /apartments/:slug/reviews/:reviewId",
           "event": [
@@ -475,21 +529,36 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Success message', () => pm.expect(pm.response.json().message).to.match(/deleted/i));"
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('message deleted', () => pm.expect(pm.response.json().message).to.match(/deleted/i));"
                 ]
               }
             }
           ],
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base}}/apartments/the-marlstone/reviews/{{reviewId}}"
+          }
+        },
+        {
+          "name": "DELETE /apartments/:slug/reviews/:reviewId – wrong owner (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('403 wrong owner', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{base}}/apartments/le-marchant-towers/reviews/4"
           }
         }
       ]
     },
-
     {
       "name": "Profile",
       "item": [
@@ -500,54 +569,146 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Has user object', () => pm.expect(pm.response.json()).to.have.property('user'));",
-                  "pm.test('Has reviews array', () => pm.expect(pm.response.json().reviews).to.be.an('array'));",
-                  "pm.test('Has stats object', () => pm.expect(pm.response.json()).to.have.property('stats'));",
-                  "pm.test('Stats has review_count', () => pm.expect(pm.response.json().stats).to.have.property('review_count'));",
-                  "pm.test('Stats has comment_count', () => pm.expect(pm.response.json().stats).to.have.property('comment_count'));"
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('user.id present', () => pm.expect(pm.response.json().user).to.have.property('id'));",
+                  "pm.test('stats.reviewCount aliased', () => pm.expect(pm.response.json().stats).to.have.property('reviewCount'));",
+                  "pm.test('stats.commentCount aliased', () => pm.expect(pm.response.json().stats).to.have.property('commentCount'));",
+                  "pm.test('reviews aliased (text not body)', () => {",
+                  "  if (pm.response.json().reviews.length > 0) {",
+                  "    pm.expect(pm.response.json().reviews[0]).to.have.property('text');",
+                  "    pm.expect(pm.response.json().reviews[0]).not.to.have.property('body');",
+                  "  }",
+                  "});"
                 ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base}}/profile"
           }
         },
-
         {
-          "name": "GET /profile – no auth (should 401)",
+          "name": "GET /profile – no auth (401)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+                  "pm.test('401 without cookie', () => pm.response.to.have.status(401));"
                 ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "url": "{{base}}/profile"
+            "url": "{{base}}/profile",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "",
+                "disabled": true
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /profile (update name)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('name updated', () => pm.expect(pm.response.json().user.name).to.eql('Updated Name'));",
+                  "pm.test('user.id still present', () => pm.expect(pm.response.json().user).to.have.property('id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PUT /profile – wrong current password (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('401 on wrong password', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"NewPass123\",\n  \"currentPassword\": \"WrongCurrentPass\"\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /profile (delete account)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 ok', () => pm.response.to.have.status(200));",
+                  "pm.test('account deleted message', () => pm.expect(pm.response.json().message).to.match(/deleted/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"TestPass123\"\n}"
+            }
           }
         }
       ]
     },
-
     {
       "name": "Upload",
       "item": [
         {
-          "name": "POST /upload – no auth (should 401)",
+          "name": "POST /upload – no auth (401)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+                  "pm.test('401 without cookie', () => pm.response.to.have.status(401));"
                 ]
               }
             }
@@ -561,25 +722,22 @@
             }
           }
         },
-
         {
-          "name": "POST /upload – with image (manual test)",
+          "name": "POST /upload – with image (manual)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
-                  "pm.test('Returns a url', () => pm.expect(pm.response.json()).to.have.property('url'));",
-                  "pm.test('URL is a string', () => pm.expect(pm.response.json().url).to.be.a('string'));",
-                  "pm.test('URL starts with https', () => pm.expect(pm.response.json().url).to.match(/^https/));"
+                  "pm.test('201 created', () => pm.response.to.have.status(201));",
+                  "pm.test('url returned', () => pm.expect(pm.response.json()).to.have.property('url'));",
+                  "pm.test('url is https', () => pm.expect(pm.response.json().url).to.match(/^https/));"
                 ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{base}}/upload",
             "body": {
               "mode": "formdata",
@@ -588,7 +746,7 @@
                   "key": "file",
                   "type": "file",
                   "src": [],
-                  "description": "Select a JPG or PNG file from your machine"
+                  "description": "Select a JPG or PNG"
                 }
               ]
             }
@@ -596,6 +754,5 @@
         }
       ]
     }
-
   ]
 }
